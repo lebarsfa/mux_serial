@@ -4,6 +4,9 @@ import os, sys
 import socket
 import optparse
 import time
+import logging
+import logging.handlers
+
 
 # Option parsing, duh
 parser = optparse.OptionParser()
