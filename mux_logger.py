@@ -52,6 +52,7 @@ elif (opts.syslog_facility):
         mux_logger.setLevel(logging.INFO)
         handler = logging.handlers.SysLogHandler(address = '/dev/log')
         mux_logger.addHandler(handler)
+        write = _write_syslog
 else:
 	write = _write_simple
 
