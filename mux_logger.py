@@ -18,6 +18,11 @@ parser.add_option('-f', '--file',
 				dest = 'file',
 				type = 'string')
 
+parser.add_option('-s', '--syslog-facility',
+				help = 'Syslog facility',
+				dest = 'syslog_facility',
+				type = 'string')
+
 (opts, args) = parser.parse_args()
 
 
@@ -32,6 +37,9 @@ def _write_log(x):
 	sys.stdout.write(x)
 	log.write(x)
 
+def _write_syslog(x):
+        mux_logger.info(x)
+
 
 # Setup log file writing
 if opts.file:
@@ -39,7 +47,11 @@ if opts.file:
 	log	= open(logname, 'w')
 	print >>sys.stderr, 'MUX > Logging output to', logname
 	write = _write_log
-
+elif (opts.syslog_facility):
+        mux_logger = logging.getLogger('MuxLogger')
+        mux_logger.setLevel(logging.INFO)
+        handler = logging.handlers.SysLogHandler(address = '/dev/log')
+        mux_logger.addHandler(handler)
 else:
 	write = _write_simple
 
