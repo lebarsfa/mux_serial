@@ -26,7 +26,14 @@ parser.add_option('-s', '--syslog-facility',
 				dest = 'syslog_facility',
 				type = 'string')
 
+parser.add_option('-l', '--line-based',
+                                help =  'Log lines (instead of characters)',
+                                dest =  'line_based',
+                                type =  'flag',
+                                action= 'store_true')
+
 (opts, args) = parser.parse_args()
+
 
 
 # Helpers
@@ -55,6 +62,7 @@ elif (opts.syslog_facility):
         mux_logger.setLevel(logging.INFO)
         handler = logging.handlers.SysLogHandler(address = '/dev/log')
         mux_logger.addHandler(handler)
+#        opts.line_based=True
         write = _write_syslog
 else:
 	write = _write_simple
@@ -104,10 +112,14 @@ while True:
 						date.tm_hour, date.tm_min, date.tm_sec,
 						elapsed, delta))
 			prev_t = elapsed
+                        if ( opts.line_based):
+                                write(current_line)
 			newline = False
 
 		# Print it!
-		write(x)
+                if ( not ( opts.line_based)):
+                        write(x)
+
 		current_line += x
 
 		if x == '\n':
