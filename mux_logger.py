@@ -29,7 +29,6 @@ parser.add_option('-s', '--syslog-facility',
 parser.add_option('-l', '--line-based',
                                 help =  'Log lines (instead of characters)',
                                 dest =  'line_based',
-                                type =  'flag',
                                 action= 'store_true')
 
 (opts, args) = parser.parse_args()
