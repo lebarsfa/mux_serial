@@ -21,10 +21,10 @@ parser.add_option('-f', '--file',
 				dest = 'file',
 				type = 'string')
 
-parser.add_option('-s', '--syslog-facility',
-				help = 'Syslog facility',
-				dest = 'syslog_facility',
-				type = 'string')
+parser.add_option('-s', '--syslog',
+				help = 'Log to syslog (info)',
+				dest = 'syslog',
+                                action = 'store_true')
 
 parser.add_option('-l', '--line-based',
                                 help =  'Log lines (instead of characters)',
@@ -32,6 +32,7 @@ parser.add_option('-l', '--line-based',
                                 action= 'store_true')
 
 (opts, args) = parser.parse_args()
+
 
 
 
@@ -56,7 +57,7 @@ if opts.file:
 	log	= open(logname, 'w')
 	print >>sys.stderr, 'MUX > Logging output to', logname
 	write = _write_log
-elif (opts.syslog_facility):
+elif (opts.syslog):
         mux_logger = logging.getLogger('MuxLogger')
         mux_logger.setLevel(logging.INFO)
         handler = logging.handlers.SysLogHandler(address = '/dev/log')
@@ -106,13 +107,12 @@ while True:
 			date = time.localtime(line_t)
 			elapsed = line_t - base_t
 			delta = elapsed - prev_t
-			write('[%04d-%02d-%02d %02d:%02d:%02d %4.3f %4.3f] '
-					%  (date.tm_year, date.tm_mon, date.tm_mday,
-						date.tm_hour, date.tm_min, date.tm_sec,
-						elapsed, delta))
+                        if ( not opts.syslog ):
+                                write('[%04d-%02d-%02d %02d:%02d:%02d %4.3f %4.3f] '
+                                      %  (date.tm_year, date.tm_mon, date.tm_mday,
+                                          date.tm_hour, date.tm_min, date.tm_sec,
+                                          elapsed, delta))
 			prev_t = elapsed
-                        if ( opts.line_based):
-                                write(current_line)
 			newline = False
 
 		# Print it!
@@ -122,6 +122,8 @@ while True:
 		current_line += x
 
 		if x == '\n':
+                        if ( opts.line_based):
+                                write(current_line)
 			newline = True
 			current_line = ''
 		flush()
