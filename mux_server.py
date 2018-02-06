@@ -1,6 +1,7 @@
 #! /usr/bin/env python
+# vim:noexpandtab:
 
-import sys, os
+import sys, os, errono
 import select, socket, serial
 
 _default_host = 'localhost'
@@ -114,7 +115,16 @@ class MuxServer(object):
 						elif s is self.tty:
 							data = s.read(80)
 							for client in self.clients:
-								client.send(data)
+								try:
+									client.send(data)
+								except socket.error, e:
+								# if the client goes away we do not care much
+									if e[0] == errno.EPIPE:
+										pass
+										print >>sys.stderr, '\nMUX > SIGPIPE ignore'
+										# unknown errors we send up the chain
+									else:
+										raise
 
 						# Data from client
 						else:
