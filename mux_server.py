@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # vim:noexpandtab:
 
-import sys, os, errono
+import sys, os, errno
 import select, socket, serial
 
 _default_host = 'localhost'
