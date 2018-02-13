@@ -40,6 +40,8 @@ class MuxServer(object):
 
 		self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server.setblocking(0)
+		# do not wait for TIME_WAIT old socket if we restart server quickly
+		self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 		self.poller = select.poll()
 
