@@ -4,7 +4,7 @@
 import sys, os, errno
 import select, socket, serial
 
-_default_host = 'localhost'
+_default_host = '0.0.0.0'
 _default_port = 23200
 
 _default_device = '/dev/ttyS0'
