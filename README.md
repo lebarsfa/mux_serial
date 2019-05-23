@@ -12,6 +12,11 @@ Included:
 * and a logger, which receives a copy of everything going through the serial port and timestamps it.
 
 
+## Dependencies
+
+- Python packages
+  ``` pip install -r requirements.txt ```
+
 ## So, how?
 
 The way I use it:
