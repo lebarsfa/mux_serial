@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import print_function 
 import sys, os
 import select, socket, serial
 
@@ -17,6 +18,9 @@ _default_compat = 0
 _default_bufsize = 8192
 
 _READ_ONLY = select.POLLIN | select.POLLPRI
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 class MuxServer(object):
 	def __init__(self,
@@ -55,17 +59,17 @@ class MuxServer(object):
 		self.clients = []
 
 	def close(self):
-		print >>sys.stderr, '\nMUX > Closing...'
+		eprint('\nMUX > Closing...')
 
 		for client in self.clients:
 			client.close()
 		self.tty.close()
 		self.server.close()
 
-		print >>sys.stderr, 'MUX > Done! =)'
+		eprint('MUX > Done! =)')
 
 	def add_client(self, client):
-		print >>sys.stderr, 'MUX > New connection from', client.getpeername()
+		eprint('MUX > New connection from', client.getpeername())
 		client.setblocking(0)
 		self.fd_to_socket[client.fileno()] = client
 		self.clients.append(client)
@@ -76,7 +80,7 @@ class MuxServer(object):
 			name = client.getpeername()
 		except:
 			name = 'client %d' % client.fileno()
-		print >>sys.stderr, 'MUX > Closing', name, ':', why
+		eprint('MUX > Closing', name, ':', why)
 		self.poller.unregister(client)
 		self.clients.remove(client)
 		client.close()
@@ -95,15 +99,15 @@ class MuxServer(object):
 			self.tty.flushOutput()
 			self.poller.register(self.tty, _READ_ONLY)
 			self.fd_to_socket[self.tty.fileno()] = self.tty
-			print >>sys.stderr, 'MUX > Serial port : %s @ %s' % (self.device, self.baudrate)
+			eprint('MUX > Serial port : %s @ %s' % (self.device, self.baudrate))
 
 			self.server.bind((self.host, self.port))
 			self.server.listen(5)
 			self.poller.register(self.server, _READ_ONLY)
 			self.fd_to_socket[self.server.fileno()] = self.server
-			print >>sys.stderr, 'MUX > Server : %s:%d' % self.server.getsockname()
+			eprint('MUX > Server : %s:%d' % self.server.getsockname())
 
-			print >>sys.stderr, 'MUX > Use ctrl+c to stop...\n'
+			eprint('MUX > Use ctrl+c to stop...\n')
 
 			while True:
 				events = self.poller.poll(500)
@@ -126,15 +130,15 @@ class MuxServer(object):
 						# Data from serial port
 						elif s is self.tty:
 							data = s.read(self.bufsize)
+							clients_status = []
 							for client in self.clients:
 								try:
 								    client.send(data)
+								    clients_status.append((client, 0))
 								except:
-								    try:
-								        name = client.getpeername()
-								    except:
-								        name = 'client %d' % client.fileno()
-								    print >>sys.stderr, 'MUX >', name, ': send() error'
+								    clients_status.append((client, 1))
+							for client, status in clients_status:
+								if (status): self.remove_client(client, 'send() error')
 
 						# Data from client
 						else:
@@ -149,10 +153,10 @@ class MuxServer(object):
 							    else: self.remove_client(s, 'Got no data')
 
 		except serial.SerialException as e:
-			print >>sys.stderr, '\nMUX > Serial error : "%s". Closing...' % e
+			eprint('\nMUX > Serial error : "%s". Closing...' % e)
 
 		except socket.error as e:
-			print >>sys.stderr, '\nMUX > Socket error : %s' % e.strerror
+			eprint('\nMUX > Socket error : %s' % e.strerror)
 
 		except (KeyboardInterrupt, SystemExit):
 			pass
