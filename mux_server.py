@@ -110,47 +110,59 @@ class MuxServer(object):
 			eprint('MUX > Use ctrl+c to stop...\n')
 
 			while True:
+				clients_status = []
 				events = self.poller.poll(500)
 				for fd, flag in events:
 					# Get socket from fd
 					s = self.fd_to_socket[fd]
 
 					if flag & select.POLLHUP:
-						self.remove_client(s, 'HUP')
+						clients_status.append((s, 1, 'HUP'))
 
 					elif flag & select.POLLERR:
-						self.remove_client(s, 'Received error')
+						clients_status.append((s, 1, 'ERR'))
 
 					elif flag & (_READ_ONLY):
 						# A readable server socket is ready to accept a connection
 						if s is self.server:
-							connection, client_host = s.accept()
-							self.add_client(connection)
+							try:
+							    connection, client_host = s.accept()
+							    clients_status.append((connection, 2, ''))
+							except:
+							    eprint('MUX >', 'accept() error')
 
 						# Data from serial port
 						elif s is self.tty:
 							data = s.read(self.bufsize)
-							clients_status = []
 							for client in self.clients:
 								try:
 								    client.send(data)
-								    clients_status.append((client, 0))
+								    clients_status.append((client, 0, ''))
 								except:
-								    clients_status.append((client, 1))
-							for client, status in clients_status:
-								if (status): self.remove_client(client, 'send() error')
+								    clients_status.append((client, 1, 'send() error'))
 
 						# Data from client
 						else:
 							try:
 							    data = s.recv(self.bufsize)
 							except:
-							    self.remove_client(s, 'recv() error')
+							    clients_status.append((s, 1, 'recv() error'))
 							else:
 							    # Client has data
-							    if data: self.tty.write(data)
+							    if data:
+							        self.tty.write(data)
+							        clients_status.append((s, 0, ''))
 							    # Interpret empty result as closed connection
-							    else: self.remove_client(s, 'Got no data')
+							    else:
+							        clients_status.append((s, 1, 'Got no data'))
+
+				for client, status, msg in clients_status:
+					if status == 1:
+					    if client in self.clients: 
+					        try: self.remove_client(client, msg) 
+					        except: eprint('MUX >', 'remove_client() error')
+					elif status == 2:
+					    self.add_client(client)
 
 		except serial.SerialException as e:
 			eprint('\nMUX > Serial error : "%s". Closing...' % e)
