@@ -20,13 +20,13 @@ _default_bufsize = 8192
 _READ_ONLY = select.POLLIN | select.POLLPRI
 
 def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+	print(*args, file=sys.stderr, **kwargs)
 
 class MuxServer(object):
 	def __init__(self,
 				host=_default_host,
 				port=_default_port,
-                reuse=_default_reuse,
+				reuse=_default_reuse,
 				device = _default_device,
 				baudrate=_default_baudrate,
 				width = _default_width,
@@ -34,8 +34,8 @@ class MuxServer(object):
 				stopbits = _default_stopbits,
 				xon = _default_xon,
 				rtc = _default_rtc,
-                compat = _default_compat,
-                bufsize = _default_bufsize,):
+				compat = _default_compat,
+				bufsize = _default_bufsize,):
 		self.host = host
 		self.port = port
 		self.reuse = reuse
@@ -88,12 +88,12 @@ class MuxServer(object):
 	def run(self):
 		try:
 			if self.compat: self.tty = serial.Serial(self.device, self.baudrate,
-									    self.width, self.parity, self.stopbits,
-									    1, 
-                                        rtscts=True, dsrdtr=True)
+										self.width, self.parity, self.stopbits,
+										1, 
+										rtscts=True, dsrdtr=True)
 			else: self.tty = serial.Serial(self.device, self.baudrate,
-									    self.width, self.parity, self.stopbits,
-									    1)
+										self.width, self.parity, self.stopbits,
+										1)
 			self.tty.timeout = 0 # Non-blocking
 			self.tty.flushInput()
 			self.tty.flushOutput()
@@ -126,43 +126,43 @@ class MuxServer(object):
 						# A readable server socket is ready to accept a connection
 						if s is self.server:
 							try:
-							    connection, client_host = s.accept()
-							    clients_status.append((connection, 2, ''))
+								connection, client_host = s.accept()
+								clients_status.append((connection, 2, ''))
 							except:
-							    eprint('MUX >', 'accept() error')
+								eprint('MUX >', 'accept() error')
 
 						# Data from serial port
 						elif s is self.tty:
 							data = s.read(self.bufsize)
 							for client in self.clients:
 								try:
-								    client.send(data)
-								    clients_status.append((client, 0, ''))
+									client.send(data)
+									clients_status.append((client, 0, ''))
 								except:
-								    clients_status.append((client, 1, 'send() error'))
+									clients_status.append((client, 1, 'send() error'))
 
 						# Data from client
 						else:
 							try:
-							    data = s.recv(self.bufsize)
+								data = s.recv(self.bufsize)
 							except:
-							    clients_status.append((s, 1, 'recv() error'))
+								clients_status.append((s, 1, 'recv() error'))
 							else:
-							    # Client has data
-							    if data:
-							        self.tty.write(data)
-							        clients_status.append((s, 0, ''))
-							    # Interpret empty result as closed connection
-							    else:
-							        clients_status.append((s, 1, 'Got no data'))
+								# Client has data
+								if data:
+									self.tty.write(data)
+									clients_status.append((s, 0, ''))
+								# Interpret empty result as closed connection
+								else:
+									clients_status.append((s, 1, 'Got no data'))
 
 				for client, status, msg in clients_status:
 					if status == 1:
-					    if client in self.clients: 
-					        try: self.remove_client(client, msg) 
-					        except: eprint('MUX >', 'remove_client() error')
+						if client in self.clients: 
+							try: self.remove_client(client, msg) 
+							except: eprint('MUX >', 'remove_client() error')
 					elif status == 2:
-					    self.add_client(client)
+						self.add_client(client)
 
 		except serial.SerialException as e:
 			eprint('\nMUX > Serial error : "%s". Closing...' % e)
@@ -183,23 +183,23 @@ if __name__ == '__main__':
 	parser = optparse.OptionParser()
 	parser.add_option('-d',
 					'--device',
-					help = 'Serial port device',
+					help = 'serial port device',
 					dest = 'device',
 					default = _default_device)
 	parser.add_option('-b',
 					'--baud',
-					help = 'Baud rate',
+					help = 'baud rate',
 					dest = 'baudrate',
 					type = 'int',
 					default = _default_baudrate)
 	parser.add_option('-i',
 					'--ip',
-					help = 'Host IP host',
+					help = 'host IP address',
 					dest = 'host',
 					default = _default_host)
 	parser.add_option('-p',
 					'--port',
-					help = 'Host port',
+					help = 'host port',
 					dest = 'port',
 					type = 'int',
 					default = _default_port)
@@ -211,23 +211,23 @@ if __name__ == '__main__':
 					default = _default_reuse)
 	parser.add_option('-c',
 					'--compat',
-					help = 'Compatibility with some virtual serial ports (e.g. created by socat)',
+					help = 'compatibility with some virtual serial ports (e.g. created by socat)',
 					dest = 'compat',
 					type = 'int',
 					default = _default_compat)
 	parser.add_option('-s',
 					'--bufsize',
-					help = 'Buffer size',
+					help = 'buffer size',
 					dest = 'bufsize',
 					type = 'int',
 					default = _default_bufsize)
 	(opts, args) = parser.parse_args()
 
 	s = MuxServer(host = opts.host,
-                port = opts.port,
-                reuse = opts.reuse,
+				port = opts.port,
+				reuse = opts.reuse,
 				device = opts.device,
 				baudrate = opts.baudrate,
 				compat = opts.compat,
-                bufsize = opts.bufsize)
+				bufsize = opts.bufsize)
 	s.run()
